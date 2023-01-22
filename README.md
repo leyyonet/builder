@@ -7,7 +7,7 @@ Builder component for JavaScript/TypeScript
 ## Install
 ``npm i @leyyo/builder``
 
-## Samples
+## Sample - Object
 ```typescript
 import {Builder} from "@leyyo/builder";
 
@@ -17,18 +17,36 @@ interface Person {
     married: boolean;
 }
 
-const builder = Builder.build<Person>();
-builder
+const person = Builder.build<Person>();
+person
     .age(32)
     .name('foo bar')
     .married(true);
-console.log(builder);
+console.log(person);
 // {age: 32, name: 'foo bar', married: true}
 
-builder.age('aaa'); // compile error
-builder.name(55); // compile error
-builder.married('yes'); // compile error
+person.age('aaa'); // compile error
+person.name(55); // compile error
+person.married('yes'); // compile error
 
+```
+
+## Sample - Class
+```typescript
+type CarColor = 'white'|'black'|'red'|'blue'|'green'|'yellow';
+class Car {
+    brand: string;
+    year: number;
+    color: CarColor;
+}
+
+const car = Builder.build<Car>(Car);
+car.brand('Toyota').year(2023).color('red');
+console.log(car);
+// {brand: 'Toyota', year: 2023, color: 'red'}
+
+console.log(car.$return()); // it is casted to Car class
+// Car {brand: 'Toyota', year: 2023, color: 'red'}
 ```
 ## Standards
 - [x] Language: `TS`
