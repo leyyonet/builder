@@ -1,59 +1,122 @@
 import {BuilderAny, BuilderGeneric, NewableClass, SetterLambda} from "./types";
 
+const RETURN_FNC = '$finalize';
+type O = Object;
+
+// noinspection JSUnusedGlobalSymbols
 export class Builder {
-    protected static setter<T>(holder, obj, prop): SetterLambda<T> {
-        return (value: unknown) : BuilderGeneric<T> => {
+    protected static setter<T extends O>(holder: BuilderGeneric<T>, obj: T, prop: keyof T): SetterLambda<T> {
+        return (value: T[keyof T]) : BuilderGeneric<T> => {
             obj[prop] = value;
             return holder;
         }
     }
-    static build<T extends Object>(fn?: NewableClass, ...args: Array<unknown>): BuilderAny<T> {
+    protected static key(key: unknown) {
+        switch (typeof key) {
+            case "string":
+                return key;
+            case "number":
+            case "bigint":
+                return key.toString(10);
+            case "boolean":
+                return key ? 'true' : 'false';
+        }
+        return null;
+    }
+    protected static tupleProps<T extends O>(ins: T, tuples: Array<[keyof T, T[keyof T]]>) {
+        tuples.forEach(item => {
+            if (Array.isArray(item) && item.length === 2) {
+                const [k, v] = item;
+                const key = this.key(k);
+                if (key) {
+                    ins[key] = v;
+                }
+            }
+        });
+    }
+    protected static objectProps<T extends O>(ins: T, values: Partial<T>) {
+        if (values instanceof Map) {
+            // because map can contain non-plain keys
+            values.forEach((k, v) => {
+                const key = this.key(k);
+                if (key) {
+                    ins[key] = v;
+                }
+            });
+        }
+        else {
+            for (const [k, v] of Object.entries(values)) {
+                const key = this.key(k);
+                if (key) {
+                    ins[key] = v;
+                }
+            }
+        }
+    }
+    static build<T extends O>(fn?: NewableClass, value?: Partial<T>): BuilderAny<T>
+    static build<T extends O>(fn?: NewableClass, args?: Array<unknown>): BuilderAny<T>
+    static build<T extends O>(fn?: NewableClass, args?: T|Array<unknown>): BuilderAny<T> {
         let ins: T;
         if (typeof fn === 'function') {
-            ins = new fn(...args) as T;
+            if (Array.isArray(args)) {
+                ins = new fn(...args) as T;
+            }
+            else if (args && typeof args === 'object') {
+                ins = new fn() as T;
+                this.objectProps(ins, args);
+            }
+            else {
+                ins = new fn() as T;
+            }
         } else {
             ins = {} as T;
-        }
-        ins['$return'] = () => {
-            if (proxy['$return'] !== undefined) {
-                delete proxy['$return'];
+            if (Array.isArray(args)) {
+                this.tupleProps(ins, args as Array<[keyof T, T[keyof T]]>);
             }
-            let ins: T;
+            else if (args && typeof args === 'object') {
+                this.objectProps(ins, args as Partial<T>);
+            }
+        }
+        ins[RETURN_FNC] = () => {
+            if (proxy[RETURN_FNC] !== undefined) {
+                delete proxy[RETURN_FNC];
+            }
+            let doc: T;
             if (typeof fn === 'function') {
                 try {
-                    ins = new fn() as T;
+                    doc = new fn() as T;
                 } catch (e) {
-                    ins = {} as T;
+                    doc = {} as T;
                 }
             } else {
-                ins = {} as T;
+                doc = {} as T;
             }
             for (const [k, v] of Object.entries(proxy)) {
                 const desc = Object.getOwnPropertyDescriptor(proxy, k);
                 if (desc) {
                     if (desc.get) {
-                        ins[k] = desc.get();
+                        doc[k] = desc.get();
                     } else {
-                        ins[k] = desc.value;
+                        doc[k] = desc.value;
                     }
                 } else {
-                    ins[k] = v;
+                    doc[k] = v;
                 }
             }
-            return ins as T;
+            return doc as T;
         }
         const setHandler = {
-            get: function(obj, prop) {
-                if (['constructor', '$return'].includes(prop)) {
+            get: function(obj: T, prop: keyof T) {
+                if (['constructor', RETURN_FNC].includes(prop as string)) {
                     return obj[prop];
                 }
                 return Builder.setter(proxy, obj, prop);
             },
-            set(obj, prop, value) {
+            set(obj: T, prop: keyof T, value: T[keyof T]) {
                 obj[prop] = value;
             }
         } as unknown as ProxyHandler<T>;
-        let proxy = new Proxy(ins, setHandler) as unknown as BuilderGeneric<T>;
+        const proxy = new Proxy(ins, setHandler) as unknown as BuilderGeneric<T>;
         if (typeof fn === 'function') {
             Object.defineProperty(proxy.constructor, 'name', {
                 configurable: true,
