@@ -1,4 +1,4 @@
-import {Builder} from "./builder";
+import { Builder } from './builder';
 
 interface Person {
     name: string;

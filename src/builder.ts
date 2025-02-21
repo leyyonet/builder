@@ -1,12 +1,12 @@
-import {BuilderAny, BuilderGeneric, NewableClass, SetterLambda} from "./types";
+import { BuilderAny, NewableClass, SetterLambda } from './types';
 
 const RETURN_FNC = '$finalize';
 type O = Object;
 
 // noinspection JSUnusedGlobalSymbols
 export class Builder {
-    protected static setter<T extends O>(holder: BuilderGeneric<T>, obj: T, prop: keyof T): SetterLambda<T> {
-        return (value: T[keyof T]) : BuilderGeneric<T> => {
+    protected static setter<T extends O>(holder: BuilderAny<T>, obj: T, prop: keyof T): SetterLambda<T> {
+        return (value: T[keyof T]) : BuilderAny<T> => {
             obj[prop] = value;
             return holder;
         }
@@ -116,7 +116,7 @@ export class Builder {
                 obj[prop] = value;
             }
         } as unknown as ProxyHandler<T>;
-        const proxy = new Proxy(ins, setHandler) as unknown as BuilderGeneric<T>;
+        const proxy = new Proxy(ins, setHandler) as unknown as BuilderAny<T>;
         if (typeof fn === 'function') {
             Object.defineProperty(proxy.constructor, 'name', {
                 configurable: true,
