@@ -24,6 +24,7 @@ class Bus extends Auto {
     }
 }
 
+/*
 
 // No default values
 const person1 = Builder.build<Person>()
@@ -110,6 +111,19 @@ const person6 = person5.$finalize(); // getters are changed to normal values, an
 console.log('  casted             => ', person6); // it's an instance, not a builder
 console.log('  property:age       => ', typeof person6.age); // should be number
 console.log('  property:$finalize => ', typeof person6['$finalize']); // should be undefined
+*/
+
+// No default values
+let p44: Person;
+const person44 = Builder.build<Person>()
+    .$callback(p => p44 = p)
+    .age(20)
+    .name('Alex')
+    .married(true)
+    .$finalize(); // so important to shift from builder to your instance
+console.log('Person with Callback');
+console.log('  casted             => ', person44);
+console.log('  callback           => ', p44);
 
 /*
 // Don't call again $finalize

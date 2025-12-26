@@ -1,7 +1,16 @@
-import { BuilderAny, NewableClass, SetterLambda } from './types';
+import {
+    BuilderAny,
+    BuilderSetLambda,
+    BuilderCallbackLambda,
+    BuilderLambda,
+    BuilderLambdaTuple,
+    NewableClass,
+    SetterLambda, BuilderWithProxy
+} from './types';
 
-const RETURN_FNC = '$finalize';
-type O = Object;
+const SECURES = ['$finalize', '$callback'] as Array<keyof BuilderWithProxy<object>>;
+
+type O = Object | Record<string, unknown>;
 
 // noinspection JSUnusedGlobalSymbols
 export class Builder {
@@ -23,7 +32,7 @@ export class Builder {
         }
         return null;
     }
-    protected static tupleProps<T extends O>(ins: T, tuples: Array<[keyof T, T[keyof T]]>) {
+    protected static _tupleProps<T extends O>(ins: T, tuples: Array<[keyof T, T[keyof T]]>) {
         tuples.forEach(item => {
             if (Array.isArray(item) && item.length === 2) {
                 const [k, v] = item;
@@ -34,7 +43,7 @@ export class Builder {
             }
         });
     }
-    protected static objectProps<T extends O>(ins: T, values: Partial<T>) {
+    protected static _objectProps<T extends O>(ins: T, values: Partial<T>) {
         if (values instanceof Map) {
             // because map can contain non-plain keys
             values.forEach((k, v) => {
@@ -53,42 +62,80 @@ export class Builder {
             }
         }
     }
-    static build<T extends O>(fn?: NewableClass, value?: Partial<T>): BuilderAny<T>
-    static build<T extends O>(fn?: NewableClass, args?: Array<unknown>): BuilderAny<T>
-    static build<T extends O>(fn?: NewableClass, args?: T|Array<unknown>): BuilderAny<T> {
-        let ins: T;
-        if (typeof fn === 'function') {
-            if (Array.isArray(args)) {
-                ins = new fn(...args) as T;
+    protected static _readProp<T>(prop: BuilderAny<T> | Partial<T>): Partial<T> {
+        if (prop) {
+            const builder = prop as BuilderAny<T>;
+            if (typeof builder.$finalize === 'function') {
+                builder.$finalize();
             }
-            else if (args && typeof args === 'object') {
-                ins = new fn() as T;
-                this.objectProps(ins, args);
+            return prop as T;
+        }
+        return {} as T;
+    }
+    protected static _fillWithDefaults<T extends O>(p1?: NewableClass<T>|Partial<T>, p2?: Partial<T>|Array<unknown>):Partial<T> {
+        // class defined
+        if (typeof p1 === 'function') {
+            // class constructor arguments are provided
+            if (Array.isArray(p2)) {
+                return new p1(...p2) as T;
             }
+            // any object is provided
+            else if (p2 && typeof p2 === 'object') {
+                // class instance is provided
+                if (p2 instanceof p1) {
+                    return p2 as T;
+                }
+                // simple object is provided as default values
+                else {
+                    const ins = new p1() as T;
+                    this._objectProps(ins, p2);
+                    return ins;
+                }
+            }
+            // there is no default values, just create instance
             else {
-                ins = new fn() as T;
-            }
-        } else {
-            ins = {} as T;
-            if (Array.isArray(args)) {
-                this.tupleProps(ins, args as Array<[keyof T, T[keyof T]]>);
-            }
-            else if (args && typeof args === 'object') {
-                this.objectProps(ins, args as Partial<T>);
+                return new p1() as T;
             }
         }
-        ins[RETURN_FNC] = () => {
-            if (proxy[RETURN_FNC] !== undefined) {
-                delete proxy[RETURN_FNC];
-            }
+        // class instance is not provided
+        const obj = {} as T;
+        // tuple list is provided as default values
+        if (Array.isArray(p1)) {
+            this._tupleProps(obj, p1 as Array<[keyof T, T[keyof T]]>);
+        }
+        // simple object is provided as default values
+        else if (p1 && typeof p1 === 'object') {
+            this._objectProps(obj, p1 as Partial<T>);
+        }
+        return obj;
+    }
+
+    static build<T extends O>(data?: Partial<T>): BuilderAny<T>;
+    static build<T extends O>(fn: NewableClass<T>): BuilderAny<T>;
+    static build<T extends O>(fn: NewableClass<T>, args: Array<unknown>): BuilderAny<T>;
+    static build<T extends O>(fn: NewableClass<T>, data: Partial<T>): BuilderAny<T>;
+
+    static build<T extends O>(p1?: NewableClass<T>|Partial<T>, p2?: Partial<T>|Array<unknown>): BuilderAny<T> {
+
+
+        const ins = this._fillWithDefaults(p1, p2) as T;
+        let callBackBody: BuilderCallbackLambda<T>;
+
+        (ins as BuilderWithProxy<T>).$finalize = (): T => {
+            SECURES.forEach((field, index) => {
+                if (proxy[field] !== undefined) {
+                    delete proxy[field];
+                }
+            })
             let doc: T;
-            if (typeof fn === 'function') {
+            if (typeof p1 === 'function') {
                 try {
-                    doc = new fn() as T;
+                    doc = new p1() as T;
                 } catch (e) {
                     doc = {} as T;
                 }
-            } else {
+            }
+            else {
                 doc = {} as T;
             }
             for (const [k, v] of Object.entries(proxy)) {
@@ -103,12 +150,28 @@ export class Builder {
                     doc[k] = v;
                 }
             }
+            if (typeof callBackBody === 'function') {
+                callBackBody(doc);
+            }
+            SECURES.forEach((field, index) => {
+                if (doc[field] !== undefined) {
+                    delete doc[field];
+                }
+            })
             return doc as T;
         }
-        const setHandler = {
-            get: function(obj: T, prop: keyof T) {
-                if (['constructor', RETURN_FNC].includes(prop as string)) {
-                    return obj[prop];
+        (ins as BuilderWithProxy<T>).$callback = ((cb: BuilderCallbackLambda<T>) => {
+            callBackBody = cb;
+            return proxy as unknown as BuilderAny<T>;
+        }) as BuilderSetLambda<T>;
+
+        const handler = {
+            get(obj: T, prop: keyof T) {
+                switch (prop as string) {
+                    case 'constructor':
+                    case '$finalize':
+                    case '$callback':
+                        return obj[prop];
                 }
                 return Builder.setter(proxy, obj, prop);
             },
@@ -116,15 +179,28 @@ export class Builder {
                 obj[prop] = value;
             }
         } as unknown as ProxyHandler<T>;
-        const proxy = new Proxy(ins, setHandler) as unknown as BuilderAny<T>;
-        if (typeof fn === 'function') {
+        const proxy = new Proxy(ins, handler) as unknown as BuilderAny<T>;
+
+        if (typeof p1 === 'function') {
             Object.defineProperty(proxy.constructor, 'name', {
                 configurable: true,
                 enumerable: true,
-                value: fn.name,
+                value: p1.name ?? 'LeyyoBuilder',
                 writable: false,
             });
         }
         return proxy as BuilderAny<T>;
     }
+
+    static retrieve<T extends O>(lambda: BuilderLambda<Partial<T>>, data?: Partial<T>): Partial<T>;
+    static retrieve<T extends O>(lambda: BuilderLambda<Partial<T>>, fn: NewableClass<T>): Partial<T>;
+    static retrieve<T extends O>(lambda: BuilderLambda<Partial<T>>, fn: NewableClass<T>, value: Partial<T>): Partial<T>;
+    static retrieve<T extends O>(lambda: BuilderLambda<Partial<T>>, fn: NewableClass<T>, args: Array<unknown>): Partial<T>;
+    static retrieve<T extends O>(lambda: BuilderLambda<Partial<T>>, p1?: NewableClass<T>|Partial<T>, p2?: Partial<T>|Array<unknown>): Partial<T> {
+        if (typeof lambda === 'function') {
+            return this._readProp(lambda(this.build<Partial<T>>(p1 as NewableClass<T>, p2 as Partial<T>)));
+        }
+        return this._fillWithDefaults(p1, p2) as T;
+    }
+
 }
