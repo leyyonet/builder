@@ -1,11 +1,11 @@
-import type {
+import {
     BuilderAny,
     BuilderCallbackMethod,
     BuilderCallbackLambda,
     BuilderLambda,
     NewableClass,
-    SetterLambda, BuilderWithProxy, BuilderSetItemLambda, BuilderSetItemMethod
-} from './types';
+    BuilderSetterLambda, BuilderWithProxy, BuilderSetItemLambda, BuilderSetItemMethod
+} from './index.types.js';
 
 const SECURES = ['$finalize', '$callback', '$setItem'] as Array<keyof BuilderWithProxy<object>>;
 
@@ -13,7 +13,7 @@ type O = Object | Record<string, unknown>;
 
 // noinspection JSUnusedGlobalSymbols
 export class Builder {
-    protected static setter<T extends O>(holder: BuilderAny<T>, obj: T, prop: keyof T, fn: BuilderSetItemLambda<T>): SetterLambda<T> {
+    protected static setter<T extends O>(holder: BuilderAny<T>, obj: T, prop: keyof T, fn: BuilderSetItemLambda<T>): BuilderSetterLambda<T> {
         return (value: T[keyof T]) : BuilderAny<T> => {
             obj[prop] = value;
             if (typeof fn === 'function') {

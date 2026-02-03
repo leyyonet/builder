@@ -1,7 +1,7 @@
-export type SetterGeneric<T, V> = (value: V) => BuilderAny<T>;
-export type SetterLambda<T> = (value: unknown) => BuilderAny<T>;
+export type BuilderSetterGeneric<T, V> = (value: V) => BuilderAny<T>;
+export type BuilderSetterLambda<T> = (value: unknown) => BuilderAny<T>;
 export type BuilderGeneric<T, K extends keyof T = keyof T> = {
-    [P in K]: SetterGeneric<T, T[P]>;
+    [P in K]: BuilderSetterGeneric<T, T[P]>;
 };
 export type BuilderCallbackMethod<T> = (cb: BuilderCallbackLambda<T>) => BuilderAny<T>;
 export type BuilderCallbackLambda<T> = (value: T) => void;
