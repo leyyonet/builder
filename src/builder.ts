@@ -1,22 +1,24 @@
-import {
+import type {
     BuilderAny,
-    BuilderSetLambda,
+    BuilderCallbackMethod,
     BuilderCallbackLambda,
     BuilderLambda,
-    BuilderLambdaTuple,
     NewableClass,
-    SetterLambda, BuilderWithProxy
+    SetterLambda, BuilderWithProxy, BuilderSetItemLambda, BuilderSetItemMethod
 } from './types';
 
-const SECURES = ['$finalize', '$callback'] as Array<keyof BuilderWithProxy<object>>;
+const SECURES = ['$finalize', '$callback', '$setItem'] as Array<keyof BuilderWithProxy<object>>;
 
 type O = Object | Record<string, unknown>;
 
 // noinspection JSUnusedGlobalSymbols
 export class Builder {
-    protected static setter<T extends O>(holder: BuilderAny<T>, obj: T, prop: keyof T): SetterLambda<T> {
+    protected static setter<T extends O>(holder: BuilderAny<T>, obj: T, prop: keyof T, fn: BuilderSetItemLambda<T>): SetterLambda<T> {
         return (value: T[keyof T]) : BuilderAny<T> => {
             obj[prop] = value;
+            if (typeof fn === 'function') {
+                fn(prop, value);
+            }
             return holder;
         }
     }
@@ -119,10 +121,11 @@ export class Builder {
 
 
         const ins = this._fillWithDefaults(p1, p2) as T;
-        let callBackBody: BuilderCallbackLambda<T>;
+        let callbackBody: BuilderCallbackLambda<T>;
+        let setItemBody: BuilderSetItemLambda<T>;
 
         (ins as BuilderWithProxy<T>).$finalize = (): T => {
-            SECURES.forEach((field, index) => {
+            SECURES.forEach(field => {
                 if (proxy[field] !== undefined) {
                     delete proxy[field];
                 }
@@ -150,10 +153,10 @@ export class Builder {
                     doc[k] = v;
                 }
             }
-            if (typeof callBackBody === 'function') {
-                callBackBody(doc);
+            if (typeof callbackBody === 'function') {
+                callbackBody(doc);
             }
-            SECURES.forEach((field, index) => {
+            SECURES.forEach(field => {
                 if (doc[field] !== undefined) {
                     delete doc[field];
                 }
@@ -161,9 +164,13 @@ export class Builder {
             return doc as T;
         }
         (ins as BuilderWithProxy<T>).$callback = ((cb: BuilderCallbackLambda<T>) => {
-            callBackBody = cb;
+            callbackBody = cb;
             return proxy as unknown as BuilderAny<T>;
-        }) as BuilderSetLambda<T>;
+        }) as BuilderCallbackMethod<T>;
+        (ins as BuilderWithProxy<T>).$setItem = ((cb: BuilderSetItemLambda<T>) => {
+            setItemBody = cb;
+            return proxy as unknown as BuilderAny<T, keyof T>;
+        }) as BuilderSetItemMethod<T>;
 
         const handler = {
             get(obj: T, prop: keyof T) {
@@ -171,9 +178,10 @@ export class Builder {
                     case 'constructor':
                     case '$finalize':
                     case '$callback':
+                    case '$setItem':
                         return obj[prop];
                 }
-                return Builder.setter(proxy, obj, prop);
+                return Builder.setter(proxy, obj, prop, setItemBody);
             },
             set(obj: T, prop: keyof T, value: T[keyof T]) {
                 obj[prop] = value;

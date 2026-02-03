@@ -1,6 +1,6 @@
 {
   "name": "@leyyo/builder",
-  "version": "3.1.6",
+  "version": "3.1.7",
   "description": "Builder for classes and interfaces",
   "keywords": [
     "builder"
@@ -27,7 +27,7 @@
     "test:watch": "jest --watch --config=jest.json",
     "test:coverage": "jest --config=jest.json --coverage --coverageDirectory=coverage",
     "simulate": "node -r ts-node/register src/simulate.ts",
-    "~publish": "npm run build && npm publish -access=public"
+    "~publish": "npm run build && npm publish"
   },
   "files": [
     "dist/*"

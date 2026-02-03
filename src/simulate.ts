@@ -125,6 +125,22 @@ console.log('Person with Callback');
 console.log('  casted             => ', person44);
 console.log('  callback           => ', p44);
 
+// No default values
+const person45: Person = {
+    name: 'Jan',
+    age: 22,
+    married: false,
+};
+Builder.build<Person>(person45)
+    .$setItem((k, v) => {
+        person45[k as 'name'] = v as string;
+    })
+    .age(30)
+    .name('Alex')
+    .married(true); // so important to shift from builder to your instance
+console.log('Person with SetItem');
+console.log('  set             => ', person45);
+
 /*
 // Don't call again $finalize
 const person7 = Builder.build<Person>()
