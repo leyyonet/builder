@@ -1,6 +1,6 @@
 {
   "name": "@leyyo/builder",
-  "version": "3.1.8",
+  "version": "3.1.10",
   "description": "Builder for classes and interfaces",
   "keywords": [
     "builder"
@@ -23,7 +23,8 @@
   "scripts": {
     "clear": "rimraf dist",
     "lint": "eslint src/**/*.ts",
-    "build": "npm run clear && tsc && [ -d \"./src/assets\" ] && cp -rv src/assets dist/assets/ || echo \"no assets\" ",
+    "asset": "node -r ts-node/register commands/assets.js",
+    "build": "npm run clear && tsc && npm run asset",
     "test": "jest --config=jest.json",
     "test:watch": "jest --watch --config=jest.json",
     "test:coverage": "jest --config=jest.json --coverage --coverageDirectory=coverage",
@@ -51,5 +52,6 @@
     "typescript": "^4.7.4"
   },
   "dependencies": {
+    "@leyyo/common": "^1.3.9"
   }
 }
