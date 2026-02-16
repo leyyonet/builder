@@ -6,6 +6,8 @@ import {
     NewableClass,
     BuilderSetterLambda, BuilderWithProxy, BuilderSetItemLambda, BuilderSetItemMethod
 } from './index.types.js';
+import {setFqn} from "@leyyo/common";
+import {FQN} from "./internal.js";
 
 const SECURES = ['$finalize', '$callback', '$setItem'] as Array<keyof BuilderWithProxy<object>>;
 
@@ -212,3 +214,4 @@ export class Builder {
     }
 
 }
+setFqn(Builder, FQN);
