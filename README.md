@@ -1,11 +1,25 @@
-# Builder
-Builder component for JavaScript/TypeScript
-
-- It generates virtual setter methods with returning existing object to use continuously
-- It takes care of types of properties
+# Leyyo: Builder
+> Builder component for JavaScript/TypeScript
+> - It generates virtual setter methods with returning existing object to use continuously
+> - It takes care of types of properties
 
 ## Install
-``npm i @leyyo/builder``
+`npm i @leyyo/builder`
+
+## Blueprint
+
+#### Items
+| Type       | Name                                                           | FQN | Description  |
+|------------|----------------------------------------------------------------|-----|--------------|
+| `class`    | [Builder](src/items/builder.ts)                                | `f` | static class |
+| `foretell` | [leyyoBuilderPredictor](src/loader/leyyo-builder-predictor.ts) |     |              |
+| `lazy`     | [leyyoBuilderLazy](src/loader/leyyo-builder-lazy.ts)           |     |              |
+> Props: `P`: **predictor**, `F`: **FQN**, `E`: **Emit**, `I`: **I18N**
+
+### Dependencies
+| Name               | Framework | Description |
+|--------------------|-----------|-------------|
+| `@leyyo/common`    | √         |             |
 
 ## Samples
 #### Import & Definitions
@@ -237,14 +251,6 @@ const person9 = Builder.build<Person>(null, {noField: 5}); // noField does exist
 - [x] DDD - Document Driven: `No` *No required*
 - [ ] EDD - Exception Driven: `No` *No required*
 - [x] TDD - Test Driven: `No`
-
-## Commands
-- ``npm run clear`` *// clears "dist" folder*
-- ``npm run lint`` *// runs eslint for static code analysis*
-- ``npm run build`` *// builds JS files at "dist" folder*
-- ``npm run test`` *// runs test files in "test" folder*
-- ``npm run test:watch`` *// runs test with watch option
-- ``npm run test:coverage`` *// runs test with coverage
 
 ## Author
 - `Date` 2022-12-10

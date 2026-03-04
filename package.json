@@ -1,6 +1,6 @@
 {
   "name": "@leyyo/builder",
-  "version": "3.1.11",
+  "version": "4.0.3",
   "description": "Builder for classes and interfaces",
   "keywords": [
     "builder"
@@ -19,39 +19,49 @@
     "email": "mustafayelmer@gmail.com"
   },
   "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
   "type": "module",
   "scripts": {
-    "clear": "rimraf dist",
+    "clear:dist": "rimraf dist & rimraf coverage",
+    "clear:rm": "rimraf package-lock.json && rimraf node_modules",
     "lint": "eslint src/**/*.ts",
-    "asset": "node -r ts-node/register commands/assets.js",
-    "build": "npm run clear && tsc && npm run asset",
-    "test": "jest --config=jest.json",
-    "test:watch": "jest --watch --config=jest.json",
-    "test:coverage": "jest --config=jest.json --coverage --coverageDirectory=coverage",
-    "simulate": "node -r ts-node/register src/simulate.ts",
-    "~publish": "npm run build && npm publish"
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "format:check": "prettier --check \"{src,test}/**/*.{ts,tsx,js}\"",
+    "format:force": "prettier --write \"{src,test}/**/*.{ts,tsx,js}\"",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "asset:copy": "node -r ts-node/register commands/assets.js",
+    "build": "npm run clear:dist && tsc && npm run asset:copy",
+    "changeset:version": "npm version patch --no-git-tag-version",
+    "publish:before": "npm run lint && npm run format:force && npm run test && npm run build",
+    "changeset:verdaccio": "npm run publish:before && npx changeset publish --registry http://localhost:4873",
+    "changeset:npm": "npm run publish:before && npx changeset publish --registry https://registry.npmjs.org",
+    "publish:public": "npm run publish:before && npm publish --registry https://registry.npmjs.org --access=public"
   },
   "files": [
     "dist/*"
   ],
   "license": "ISC",
   "devDependencies": {
-    "@types/jest": "^28.1.4",
-    "@types/node": "^18.0.0",
-    "@typescript-eslint/eslint-plugin": "^5.30.0",
-    "@typescript-eslint/parser": "^5.30.0",
-    "eslint": "^8.18.0",
-    "eslint-config-prettier": "^8.5.0",
-    "eslint-config-standard": "^17.0.0",
-    "eslint-plugin-node": "^11.1.0",
-    "jest": "^28.1.2",
-    "prettier": "^2.7.1",
-    "rimraf": "^3.0.2",
-    "ts-jest": "^28.0.5",
-    "ts-node": "^10.8.1",
-    "typescript": "^4.7.4"
+    "@changesets/cli": "^2.29.8",
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^24.2.1",
+    "@vitest/coverage-istanbul": "^4.0.18",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-n": "^17.24.0",
+    "prettier": "^3.8.1",
+    "rimraf": "^6.0.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^4.0.18"
   },
   "dependencies": {
-    "@leyyo/common": "^1.3.12"
+    "@leyyo/common": "^4.0.3"
   }
 }

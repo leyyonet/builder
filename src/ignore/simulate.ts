@@ -1,27 +1,27 @@
-import { Builder } from './builder.js';
+import { Builder } from "../items/builder.js";
 
 interface Person {
-    name: string;
-    age: number;
-    married: boolean;
+  name: string;
+  age: number;
+  married: boolean;
 }
-type AutoColor = 'white'|'black'|'red'|'blue'|'green'|'yellow';
+type AutoColor = "white" | "black" | "red" | "blue" | "green" | "yellow";
 class Auto {
-    brand: string;
-    year: number;
-    color: AutoColor;
+  brand: string;
+  year: number;
+  color: AutoColor;
 }
 class Truck extends Auto {
-    capacity: number;
+  capacity: number;
 }
 class Bus extends Auto {
-    passengers: number;
+  passengers: number;
 
-    constructor(year: number, passengers: number) {
-        super();
-        this.year = year;
-        this.passengers = passengers
-    }
+  constructor(year: number, passengers: number) {
+    super();
+    this.year = year;
+    this.passengers = passengers;
+  }
 }
 
 /*
@@ -116,30 +116,30 @@ console.log('  property:$finalize => ', typeof person6['$finalize']); // should 
 // No default values
 let p44: Person;
 const person44 = Builder.build<Person>()
-    .$callback(p => p44 = p)
-    .age(20)
-    .name('Alex')
-    .married(true)
-    .$finalize(); // so important to shift from builder to your instance
-console.log('Person with Callback');
-console.log('  casted             => ', person44);
-console.log('  callback           => ', p44);
+  .$callback((p) => (p44 = p))
+  .age(20)
+  .name("Alex")
+  .married(true)
+  .$finalize(); // so important to shift from builder to your instance
+console.log("Person with Callback");
+console.log("  casted             => ", person44);
+console.log("  callback           => ", p44);
 
 // No default values
 const person45: Person = {
-    name: 'Jan',
-    age: 22,
-    married: false,
+  name: "Jan",
+  age: 22,
+  married: false,
 };
 Builder.build<Person>(person45)
-    .$setItem((k, v) => {
-        person45[k as 'name'] = v as string;
-    })
-    .age(30)
-    .name('Alex')
-    .married(true); // so important to shift from builder to your instance
-console.log('Person with SetItem');
-console.log('  set             => ', person45);
+  .$setItem((k, v) => {
+    person45[k as "name"] = v as string;
+  })
+  .age(30)
+  .name("Alex")
+  .married(true); // so important to shift from builder to your instance
+console.log("Person with SetItem");
+console.log("  set             => ", person45);
 
 /*
 // Don't call again $finalize
