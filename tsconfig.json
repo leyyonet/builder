@@ -1,14 +1,9 @@
 {
-
   "compilerOptions": {
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "allowJs": true ,
     "outDir": "dist",
-    "types": ["node", "vitest/importMeta"],
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
     "sourceMap": false,
     "declaration": true,
     "emitDecoratorMetadata": true,
@@ -17,17 +12,13 @@
     "esModuleInterop": true,
     "isolatedModules": true
   },
-  "ts-node": {
-    "esm": true,
-    "experimentalSpecifierResolution": "node"
-  },
   "include": [
     "src/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "dist",
-    "src/**/*dev/*",
-    "src/**/*.spec.ts"
+    "src/**/*.spec.ts",
+    "test/**/*.spec.ts"
   ]
 }

@@ -1,2 +1,6 @@
-leyyo.builder:
-  test: true
+ignore: true
+rules:
+  - none
+config:
+  leyyo.builder:
+    foo: bar
