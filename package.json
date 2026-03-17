@@ -1,6 +1,6 @@
 {
     "name": "@leyyo/builder",
-    "version": "4.0.7",
+    "version": "4.0.8",
     "description": "Builder for classes and interfaces",
     "keywords": [
         "builder"
@@ -60,6 +60,6 @@
         "eslint-plugin-unused-imports": "^4.4.1"
     },
     "dependencies": {
-        "@leyyo/common": "4.0.10"
+        "@leyyo/common": "4.0.11"
     }
 }
