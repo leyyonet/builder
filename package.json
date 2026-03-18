@@ -1,6 +1,6 @@
 {
     "name": "@leyyo/builder",
-    "version": "4.0.11",
+    "version": "4.0.12",
     "description": "Builder for classes and interfaces",
     "keywords": [
         "builder"
